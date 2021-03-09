@@ -14,7 +14,7 @@
 // To conserve gas, efficient serialization is achieved through Borsh (http://borsh.io/)
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::wee_alloc;
-use near_sdk::{env, near_bindgen};
+use near_sdk::{env, near_bindgen, PromiseResult, ext_contract};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -23,6 +23,8 @@ pub mod museum;
 
 pub use crate::museum::*;
 
+//const MEME_KEY: String = "state";
+//const MUSEUM_KEY: String = "state";
 
 // Structs in Rust are similar to other languages, and may include impl keyword as shown below
 // Note: the names of the structs are not important when calling the smart contract, but the function names are
@@ -30,6 +32,23 @@ pub use crate::museum::*;
 #[derive(Default, BorshDeserialize, BorshSerialize)]
 pub struct MemeMuseum {
     museum: Museum,
+}
+
+#[ext_contract(ext_self)]
+pub trait ExtMemeMuseum {
+    fn on_add_meme(&mut self,  meme: AccountId) -> Promise;
+}
+
+fn is_promise_success() -> bool {
+    assert_eq!(
+        env::promise_results_count(),
+        1,
+        "Contract expected a result on the callback"
+    );
+    match env::promise_result(0) {
+        PromiseResult::Successful(_) => true,
+        _ => false,
+    }
 }
 
 
@@ -47,6 +66,8 @@ impl MemeMuseum {
         meme_museum
     }
 }
+
+
 
 /*
  * The rest of this file holds the inline tests for the code above
